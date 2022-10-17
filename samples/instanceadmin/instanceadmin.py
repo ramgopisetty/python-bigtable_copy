@@ -164,6 +164,46 @@ def add_cluster(project_id, instance_id, cluster_id):
         # [END bigtable_create_cluster]
 
 
+def update_cluster(project_id, instance_id, cluster_id, nodes):
+    """Add Cluster
+
+    :type project_id: str
+    :param project_id: Project id of the client.
+
+    :type instance_id: str
+    :param instance_id: Instance of the client.
+
+    :type cluster_id: str
+    :param cluster_id: Cluster id.
+
+    :type nodes: str
+    :param nodes: Number of nodes in the cluster
+    """
+
+    client = bigtable.Client(project=project_id, admin=True)
+    instance = client.instance(instance_id)
+
+    location_id = "us-central1-a"
+    serve_nodes = int(nodes)
+    storage_type = enums.StorageType.SSD
+
+    cluster = instance.cluster(
+            cluster_id,
+            location_id=location_id,
+            serve_nodes=serve_nodes,
+            default_storage_type=storage_type,
+        )
+    if cluster.exists():
+        operation = cluster.update()
+        # Ensure the operation completes.
+        operation.result(timeout=480)
+        print("\nCluster updated: {}".format(cluster_id))
+        # [END bigtable_update_cluster]
+    else:
+        print("\nCluster not updated, as {} does not exists.".format(cluster_id))
+
+
+
 def delete_cluster(project_id, instance_id, cluster_id):
     """Delete the cluster
 
@@ -192,6 +232,8 @@ def delete_cluster(project_id, instance_id, cluster_id):
     # [END bigtable_delete_cluster]
 
 
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -215,6 +257,11 @@ if __name__ == "__main__":
                         connect to.",
     )
 
+    parser.add_argument(
+        "nodes",
+        help="Number of nodes in the cluster",
+    )
+
     args = parser.parse_args()
 
     if args.command.lower() == "run":
@@ -225,6 +272,8 @@ if __name__ == "__main__":
         add_cluster(args.project_id, args.instance_id, args.cluster_id)
     elif args.command.lower() == "del-cluster":
         delete_cluster(args.project_id, args.instance_id, args.cluster_id)
+    elif args.command.lower() == "update-cluster":
+        update_cluster(args.project_id, args.instance_id, args.cluster_id,args.nodes)
     else:
         print(
             "Command should be either run \n Use argument -h, \
